@@ -22,19 +22,37 @@ jobs:
           SING_BOX_DEB_URL: "https://github.com/SagerNet/sing-box/releases/download/v1.8.8/sing-box_1.8.8_linux_amd64.deb"
         run: |
             set -Eeuo pipefail
-            wget -O sing-box.deb $SING_BOX_DEB_URL
+            wget -O sing-box.deb --quiet $SING_BOX_DEB_URL
             sudo dpkg -i sing-box.deb
+      - name: Hash old ruleset
+        run: |
+            set -Eeuo pipefail
+            git fetch --depth=1 origin ruleset
+            git checkout ruleset
+            HASHSUM=$(sha256sum rkn-ruleset.srs | cut -d ' ' -f 1)
+            echo "OLD_HASHSUM=$HASHSUM" >> $GITHUB_ENV
+            echo "OLD_HASHSUM=$HASHSUM"
+            git checkout master
       - name: "Update rule-set"
         run: |
             set -Eeuo pipefail
             bun src/main.ts
+            HASHSUM=$(sha256sum out/rkn-ruleset.srs | cut -d ' ' -f 1)
+            echo "NEW_HASHSUM=$HASHSUM" >> $GITHUB_ENV
+            echo "NEW_HASHSUM=$HASHSUM"
       - name: "Commit and push"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
             set -Eeuo pipefail
+            if [ "${OLD_HASHSUM}" == "${NEW_HASHSUM}" ]; then
+                echo "No changes in ruleset"
+                exit 0
+            fi
+            
             cd out
             git init
+            git config --local init.defaultBranch master
             git config --local user.name "github-actions[bot]"
             git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add .
