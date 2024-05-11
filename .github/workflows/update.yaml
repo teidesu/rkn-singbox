@@ -1,0 +1,44 @@
+name: "Update ruleset"
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-rule-set:
+    name: "Update sing-box rule-set"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+        with:
+            bun-version: '1.1.6'
+      - run: bun install --frozen-lockfile
+      - name: Setup sing-box
+        env:
+          SING_BOX_DEB_URL: "https://github.com/SagerNet/sing-box/releases/download/v1.8.8/sing-box_1.8.8_linux_amd64.deb"
+        run: |
+            set -Eeuo pipefail
+            wget -O sing-box.deb $SING_BOX_DEB_URL
+            sudo dpkg -i sing-box.deb
+      - name: "Update rule-set"
+        run: |
+            set -Eeuo pipefail
+            bun src/main.ts
+      - name: "Commit and push"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+            set -Eeuo pipefail
+            cd out
+            git init
+            git config --local user.name "github-actions[bot]"
+            git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit --allow-empty-message --no-edit
+            git branch -M ruleset
+            git remote add origin https://github-action:$GITHUB_TOKEN@github.com/teidesu/rkn-singbox.git
+            git push -u origin ruleset --force
