@@ -32,7 +32,7 @@ put the following in your config json:
 ```
 
 for a more sophisticated server-side setup with fakeip (similar to [antizapret-vpn-container](https://bitbucket.org/anticensority/antizapret-vpn-container)),
-see [here](https://github.com/teidesu/nixos/blob/master/hosts/koi/services/sing-box.nix)
+see [here](https://github.com/teidesu/nixos/blob/90a6952fa4802545a3201d410acf481ebb0459fa/hosts/koi/services/sing-box.nix)
 
 ## running
 
