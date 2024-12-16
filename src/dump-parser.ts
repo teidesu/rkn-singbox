@@ -1,4 +1,5 @@
 import { createInterface } from 'node:readline'
+import { createGunzip } from 'node:zlib'
 
 import { decodeStream } from 'iconv-lite'
 
@@ -11,12 +12,13 @@ export interface RknDumpEntry {
 }
 
 export async function* rknDumpCsv() {
-    const res = await fetch('https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv')
+    const res = await fetch('https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv.gz')
     if (!res.ok) {
         throw new Error(`Failed to download RKN dump: ${res.statusText}`)
     }
 
     const stream = webStreamToNode(res.body!)
+        .pipe(createGunzip())
         .pipe(decodeStream('win1251'))
     const reader = createInterface({
         input: stream,
